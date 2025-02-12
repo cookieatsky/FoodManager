@@ -33,6 +33,13 @@ class MainActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
+// Переход в список рецептов
+        val buttonRecipeList: Button = findViewById(R.id.RecipesListButton)
+        buttonRecipeList.setOnClickListener { // Исправлено на buttonRecipeList
+            val intent = Intent(this, RecipeListActivity::class.java)
+            startActivity(intent)
+        }
+
         //Переход в генератор
         val buttonGenerator: Button = findViewById(R.id.GeneratorButton)
         buttonGenerator.setOnClickListener {

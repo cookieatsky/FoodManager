@@ -50,6 +50,14 @@
             android:layout_margin="10dp" />
 
         <Button
+            android:id="@+id/RecipesListButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Список рецептов"
+            android:layout_margin="10dp" />
+
+
+        <Button
             android:id="@+id/GeneratorButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

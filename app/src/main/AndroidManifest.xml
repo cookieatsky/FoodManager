@@ -19,6 +19,12 @@
             android:name=".RecipesMapActivity"
             android:exported="false" />
         <activity
+            android:name=".RecipeListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".CreateRecipeActivity"
+            android:exported="false" />
+        <activity
             android:name=".ProductListActivity"
             android:exported="false" />
         <activity
