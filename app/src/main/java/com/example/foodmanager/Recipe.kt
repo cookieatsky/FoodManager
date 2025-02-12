@@ -2,9 +2,14 @@ package com.example.foodmanager
 
 data class Recipe(
     val id: Int,
-    val product: String,
+    val products: List<ProductQuantity>, // Список продуктов и их количеств
     val servings: Int,
     val steps: String,
-    val image: ByteArray? // если вы планируете хранить изображение
+    val image: ByteArray? // Данные изображения
+)
+
+data class ProductQuantity(
+    val product: String,
+    val quantity: Int // Количество продукта
 )
 

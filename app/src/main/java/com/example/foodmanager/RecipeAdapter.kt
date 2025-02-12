@@ -22,7 +22,10 @@ class RecipeAdapter(private val recipes: List<Recipe>) :
 
     override fun onBindViewHolder(holder: RecipeViewHolder, position: Int) {
         val recipe = recipes[position]
-        holder.product.text = "Продукт: ${recipe.product}"
+
+        // Формируем строку для всех продуктов
+        val productNames = recipe.products.joinToString { "${it.product} (${it.quantity})" }
+        holder.product.text = "Продукты: $productNames"
         holder.servings.text = "Количество порций: ${recipe.servings}"
         holder.steps.text = "Пошаговое приготовление: ${recipe.steps}"
     }

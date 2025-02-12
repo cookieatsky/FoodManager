@@ -22,6 +22,8 @@ class ProductListActivity : AppCompatActivity() {
         databaseHelper = DatabaseHelper(this)
         recyclerView = findViewById(R.id.recyclerView)
 
+
+
         // Получаем все записи продуктов из базы данных
         products = getProductsFromDatabase()
 

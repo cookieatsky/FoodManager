@@ -1,6 +1,5 @@
 package com.example.foodmanager
 
-import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
@@ -8,12 +7,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
-
 class RecipeListActivity : AppCompatActivity() {
-    private lateinit var databaseHelper: DatabaseHelper // предположительно ваш класс для работы с базой данных
+    private lateinit var databaseHelper: DatabaseHelper
     private lateinit var recyclerView: RecyclerView
-    private lateinit var recipeAdapter: RecipeAdapter // перепишите его по аналогии с ProductAdapter
-    private lateinit var recipes: List<Recipe> // создайте класс Recipe для вашей модели рецепта
+    private lateinit var recipeAdapter: RecipeAdapter
+    private lateinit var recipes: List<Recipe>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -22,7 +20,7 @@ class RecipeListActivity : AppCompatActivity() {
         databaseHelper = DatabaseHelper(this)
         recyclerView = findViewById(R.id.recyclerView)
 
-        recipes = getRecipesFromDatabase() // Получение рецептов из БД
+        recipes = getRecipesFromDatabase()
 
         recipeAdapter = RecipeAdapter(recipes)
         recyclerView.layoutManager = LinearLayoutManager(this)
@@ -43,12 +41,14 @@ class RecipeListActivity : AppCompatActivity() {
         if (cursor.moveToFirst()) {
             do {
                 val id = cursor.getInt(cursor.getColumnIndex(DatabaseHelper.COLUMN_ID))
-                val product = cursor.getString(cursor.getColumnIndex(DatabaseHelper.COLUMN_PRODUCT))
                 val servings = cursor.getInt(cursor.getColumnIndex(DatabaseHelper.COLUMN_SERVINGS))
                 val steps = cursor.getString(cursor.getColumnIndex(DatabaseHelper.COLUMN_STEPS))
-                val image = cursor.getBlob(cursor.getColumnIndex(DatabaseHelper.COLUMN_IMAGE)) // Если используете изображение
+                val image = cursor.getBlob(cursor.getColumnIndex(DatabaseHelper.COLUMN_IMAGE))
 
-                val recipe = Recipe(id, product, servings, steps, image)
+                // Получаем ингредиенты для данного рецепта
+                val ingredients = getIngredientsForRecipe(id)
+
+                val recipe = Recipe(id, ingredients, servings, steps, image)
                 recipeList.add(recipe)
             } while (cursor.moveToNext())
         }
@@ -56,5 +56,24 @@ class RecipeListActivity : AppCompatActivity() {
         cursor.close()
         db.close()
         return recipeList
+    }
+
+    private fun getIngredientsForRecipe(recipeId: Int): List<ProductQuantity> {
+        val ingredientsList = mutableListOf<ProductQuantity>()
+        val db = databaseHelper.readableDatabase
+        val cursor = db.rawQuery("SELECT product_name, quantity FROM ${DatabaseHelper.TABLE_RECIPE_INGREDIENTS} WHERE recipe_id = ?",
+            arrayOf(recipeId.toString()))
+
+        if (cursor.moveToFirst()) {
+            do {
+                val productName = cursor.getString(cursor.getColumnIndex("product_name"))
+                val quantity = cursor.getInt(cursor.getColumnIndex("quantity"))
+                ingredientsList.add(ProductQuantity(productName, quantity))
+            } while (cursor.moveToNext())
+        }
+
+        cursor.close()
+        db.close()
+        return ingredientsList
     }
 }
