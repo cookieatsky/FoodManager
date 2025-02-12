@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">FoodManager</string>
+    <string-array name="units_array">
+        <item>мл</item>
+        <item>г</item>
+        <item>шт</item>
+    </string-array>
+</resources>
