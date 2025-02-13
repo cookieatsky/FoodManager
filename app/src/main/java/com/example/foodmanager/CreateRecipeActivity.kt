@@ -1,7 +1,6 @@
 package com.example.foodmanager
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.widget.ArrayAdapter
 import android.widget.Button
@@ -12,6 +11,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 
 class CreateRecipeActivity : AppCompatActivity() {
+    private lateinit var titleInput: EditText
     private lateinit var servingsInput: EditText
     private lateinit var stepsInput: EditText
     private lateinit var productsContainer: LinearLayout
@@ -25,6 +25,7 @@ class CreateRecipeActivity : AppCompatActivity() {
         databaseHelper = DatabaseHelper(this)
 
         // Инициализация полей ввода
+        titleInput = findViewById(R.id.edit_text_title) // Инициализируем поле для названия
         servingsInput = findViewById(R.id.edit_text_servings)
         stepsInput = findViewById(R.id.edit_text_steps)
         productsContainer = findViewById(R.id.products_container)
@@ -47,19 +48,13 @@ class CreateRecipeActivity : AppCompatActivity() {
 
     private fun loadProductsIntoSpinner(spinner: Spinner) {
         val products = databaseHelper.getAllProducts()
-        if (products.isEmpty()) {
-            Log.e("CreateRecipeActivity", "Products list is empty.")
-            Toast.makeText(this, "Список продуктов пуст!", Toast.LENGTH_SHORT).show()
-        } else {
-            Log.d("CreateRecipeActivity", "Loaded products: $products")
-        }
         val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, products)
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinner.adapter = adapter
     }
 
     private fun saveRecipe() {
-        val productQuantities = mutableListOf<DatabaseHelper.ProductQuantity>()
+        val productQuantities = mutableListOf<ProductQuantity>() // Здесь теперь используется правильный класс
 
         for (i in 0 until productsContainer.childCount) {
             val productField = productsContainer.getChildAt(i)
@@ -70,15 +65,16 @@ class CreateRecipeActivity : AppCompatActivity() {
             val quantity = quantityInput.text.toString().toIntOrNull() ?: 0
 
             if (product.isNotBlank() && quantity > 0) {
-                productQuantities.add(DatabaseHelper.ProductQuantity(product, quantity))
+                productQuantities.add(ProductQuantity(product, quantity))
             }
         }
 
+        val title = titleInput.text.toString().trim() // Получаем название рецепта
         val servings = servingsInput.text.toString().toIntOrNull() ?: 0
         val steps = stepsInput.text.toString()
 
         // Сохранение рецепта с продуктами
-        databaseHelper.addRecipe(productQuantities, servings, steps, null)
+        databaseHelper.addRecipe(title, productQuantities, servings, steps, null) // Передаем название рецепта
 
         Toast.makeText(this, "Рецепт сохранен!", Toast.LENGTH_SHORT).show()
         finish()

@@ -20,7 +20,7 @@ class RecipeListActivity : AppCompatActivity() {
         databaseHelper = DatabaseHelper(this)
         recyclerView = findViewById(R.id.recyclerView)
 
-        recipes = getRecipesFromDatabase()
+        recipes = databaseHelper.getAllRecipes()
 
         recipeAdapter = RecipeAdapter(recipes)
         recyclerView.layoutManager = LinearLayoutManager(this)
@@ -41,14 +41,19 @@ class RecipeListActivity : AppCompatActivity() {
         if (cursor.moveToFirst()) {
             do {
                 val id = cursor.getInt(cursor.getColumnIndex(DatabaseHelper.COLUMN_ID))
+                val titleIndex = cursor.getColumnIndex(DatabaseHelper.COLUMN_TITLE)
                 val servings = cursor.getInt(cursor.getColumnIndex(DatabaseHelper.COLUMN_SERVINGS))
-                val steps = cursor.getString(cursor.getColumnIndex(DatabaseHelper.COLUMN_STEPS))
-                val image = cursor.getBlob(cursor.getColumnIndex(DatabaseHelper.COLUMN_IMAGE))
+                val stepsIndex = cursor.getColumnIndex(DatabaseHelper.COLUMN_STEPS)
+                val imageIndex = cursor.getColumnIndex(DatabaseHelper.COLUMN_IMAGE)
+
+                val title = if (titleIndex != -1) cursor.getString(titleIndex) else ""
+                val steps = if (stepsIndex != -1) cursor.getString(stepsIndex) else ""
+                val image = if (imageIndex != -1) cursor.getBlob(imageIndex) else null
 
                 // Получаем ингредиенты для данного рецепта
                 val ingredients = getIngredientsForRecipe(id)
 
-                val recipe = Recipe(id, ingredients, servings, steps, image)
+                val recipe = Recipe(id, title, ingredients, servings, steps, image) // Заголовок передается
                 recipeList.add(recipe)
             } while (cursor.moveToNext())
         }

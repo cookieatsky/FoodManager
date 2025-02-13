@@ -22,6 +22,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         const val COLUMN_CALORIES = "calories"
 
         // Константы для таблицы рецептов
+        const val COLUMN_TITLE = "title"
         const val TABLE_RECIPE = "Recipe"
         const val COLUMN_SERVINGS = "servings"
         const val COLUMN_STEPS = "steps"
@@ -33,8 +34,6 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         const val COLUMN_PRODUCT_NAME = "product_name" // Название продукта
         const val COLUMN_QUANTITY = "quantity" // Количество продукта
     }
-
-
 
     override fun onCreate(db: SQLiteDatabase?) {
         // Создание таблицы продуктов
@@ -54,6 +53,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         val createTableRecipe = (
                 "CREATE TABLE IF NOT EXISTS ${TABLE_RECIPE} (" +
                         "${COLUMN_ID} INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                        "${COLUMN_TITLE} TEXT, " + // Поле для заголовка рецепта
                         "${COLUMN_SERVINGS} INTEGER, " +
                         "${COLUMN_STEPS} TEXT, " +
                         "${COLUMN_IMAGE} BLOB" +
@@ -97,9 +97,10 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
     }
 
     // Новый метод для добавления рецепта с ингредиентами
-    fun addRecipe(ingredients: List<ProductQuantity>, servings: Int, steps: String, image: ByteArray?) {
+    fun addRecipe(title: String, ingredients: List<ProductQuantity>, servings: Int, steps: String, image: ByteArray?) {
         val db = this.writableDatabase
         val recipeValues = ContentValues()
+        recipeValues.put(COLUMN_TITLE, title) // Сохраняем название рецепта
         recipeValues.put(COLUMN_SERVINGS, servings)
         recipeValues.put(COLUMN_STEPS, steps)
         recipeValues.put(COLUMN_IMAGE, image)
@@ -145,6 +146,62 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         return productList
     }
 
-    // Класс для хранения информации о продукте и его количестве
-    data class ProductQuantity(val product: String, val quantity: Int)
+    // Метод получения всех рецептов
+    fun getAllRecipes(): List<Recipe> {
+        val recipeList = mutableListOf<Recipe>()
+        val db = this.readableDatabase
+        var cursor: Cursor? = null
+        try {
+            // Получаем все записи из таблицы рецептов
+            val query = "SELECT * FROM ${TABLE_RECIPE}"
+            cursor = db.rawQuery(query, null)
+
+            if (cursor.moveToFirst()) {
+                do {
+                    val id = cursor.getInt(cursor.getColumnIndex(COLUMN_ID))
+                    val title = cursor.getString(cursor.getColumnIndex(COLUMN_TITLE)) // Заголовок рецепта
+                    val servings = cursor.getInt(cursor.getColumnIndex(COLUMN_SERVINGS))
+                    val steps = cursor.getString(cursor.getColumnIndex(COLUMN_STEPS))
+                    val image = cursor.getBlob(cursor.getColumnIndex(COLUMN_IMAGE))
+
+                    // Получаем ингредиенты для данного рецепта
+                    val products = getIngredientsForRecipe(id)
+
+                    // Создаем объект рецепта и добавляем в список
+                    recipeList.add(Recipe(id, title, products, servings, steps, image))
+                } while (cursor.moveToNext())
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        } finally {
+            cursor?.close()
+            db.close()
+        }
+        return recipeList
+    }
+    // Метод получения ингредиентов для рецепта
+    private fun getIngredientsForRecipe(recipeId: Int): List<ProductQuantity> {
+        val ingredientsList = mutableListOf<ProductQuantity>()
+        val db = this.readableDatabase
+        var cursor: Cursor? = null
+        try {
+            val query = "SELECT ${COLUMN_PRODUCT_NAME}, ${COLUMN_QUANTITY} FROM ${TABLE_RECIPE_INGREDIENTS} WHERE ${COLUMN_RECIPE_ID} = ?"
+            cursor = db.rawQuery(query, arrayOf(recipeId.toString()))
+
+            if (cursor.moveToFirst()) {
+                do {
+                    val productName = cursor.getString(cursor.getColumnIndex(COLUMN_PRODUCT_NAME))
+                    val quantity = cursor.getInt(cursor.getColumnIndex(COLUMN_QUANTITY))
+
+                    ingredientsList.add(ProductQuantity(productName, quantity))
+                } while (cursor.moveToNext())
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        } finally {
+            cursor?.close()
+            db.close()
+        }
+        return ingredientsList
+    }
 }
