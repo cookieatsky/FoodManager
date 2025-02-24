@@ -4,73 +4,89 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <LinearLayout
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
+        android:layout_height="match_parent">
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Создание рецепта"
-            android:gravity="center"
-            android:textSize="30sp"
-            android:layout_marginBottom="16dp" />
-
-        <!-- Контейнер для добавления продуктов -->
         <LinearLayout
-            android:id="@+id/products_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"/>
+            android:orientation="vertical"
+            android:padding="16dp">
 
-        <EditText
-            android:id="@+id/edit_text_title"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Название рецепта"
-            android:layout_marginBottom="16dp" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Создание рецепта"
+                android:gravity="center"
+                android:textSize="30sp"
+                android:layout_marginBottom="16dp" />
 
-        <Button
-            android:id="@+id/button_add_product"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Добавить продукт"
-            android:layout_marginBottom="16dp" />
+            <!-- Контейнер для добавления продуктов -->
+            <LinearLayout
+                android:id="@+id/products_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"/>
 
-        <EditText
-            android:id="@+id/edit_text_servings"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Количество порций"
-            android:layout_marginBottom="16dp" />
+            <EditText
+                android:id="@+id/edit_text_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Название рецепта"
+                android:layout_marginBottom="16dp" />
 
-        <Spinner
-            android:id="@+id/spinner_categories"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            <Button
+                android:id="@+id/button_add_product"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Добавить продукт"
+                android:layout_marginBottom="16dp" />
 
-        <EditText
-            android:id="@+id/edit_text_steps"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Пошаговое приготовление"
-            android:layout_marginBottom="16dp"
-            android:inputType="textMultiLine"
-            android:gravity="top" />
+            <EditText
+                android:id="@+id/edit_text_servings"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Количество порций"
+                android:layout_marginBottom="16dp" />
 
-        <Button
-            android:id="@+id/button_upload_image"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Загрузить фотографию"
-            android:layout_marginBottom="16dp"/>
+            <Spinner
+                android:id="@+id/spinner_categories"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
 
-        <Button
-            android:id="@+id/button_save_recipe"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Сохранить" />
-    </LinearLayout>
+            <EditText
+                android:id="@+id/edit_text_steps"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Пошаговое приготовление"
+                android:layout_marginBottom="16dp"
+                android:inputType="textMultiLine"
+                android:gravity="top"
+                android:minLines="3"
+                android:maxLines="10" />
+
+            <!-- ImageView для отображения загруженной фотографии -->
+            <ImageView
+                android:id="@+id/imageView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:adjustViewBounds="true"
+                android:layout_marginBottom="16dp"
+                android:visibility="gone"/>
+
+            <Button
+                android:id="@+id/button_upload_image"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Загрузить фотографию"
+                android:layout_marginBottom="16dp"/>
+
+            <Button
+                android:id="@+id/button_save_recipe"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Сохранить" />
+        </LinearLayout>
+    </ScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>

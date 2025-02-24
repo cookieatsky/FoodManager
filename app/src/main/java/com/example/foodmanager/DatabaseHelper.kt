@@ -10,7 +10,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
 
     companion object {
         private const val DATABASE_NAME = "FoodManagerDB.db"
-        private const val DATABASE_VERSION = 4 // Увеличиваем версию базы данных для изменения структуры
+        private const val DATABASE_VERSION = 5 // Увеличиваем версию базы данных для изменения структуры
 
         const val TABLE_PRODUCT = "Product"
         const val COLUMN_ID = "ID"
@@ -26,7 +26,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         const val TABLE_RECIPE = "Recipe"
         const val COLUMN_SERVINGS = "servings"
         const val COLUMN_STEPS = "steps"
-        const val COLUMN_IMAGE = "image" // Если вы планируете хранить изображения
+        const val COLUMN_IMAGE = "image_path" // Изменено с BLOB на TEXT для хранения пути к изображению
         const val COLUMN_CATEGORY_ID = "category_id" // Это ID категории для рецепта
 
         // Константы для таблицы ингредиентов
@@ -68,7 +68,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
                 $COLUMN_TITLE TEXT,
                 $COLUMN_SERVINGS INTEGER,
                 $COLUMN_STEPS TEXT,
-                $COLUMN_IMAGE BLOB,
+                $COLUMN_IMAGE TEXT, 
                 $COLUMN_CATEGORY_ID INTEGER
             );
         """.trimIndent()
@@ -131,15 +131,15 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         db.close()
     }
 
-    // Новый метод для добавления рецепта с ингредиентами
-    fun addRecipe(title: String, ingredients: List<ProductQuantity>, servings: Int, steps: String, image: ByteArray?, categoryId: Int?) {
+    // Метод для добавления рецепта с ингредиентами
+    fun addRecipe(title: String, ingredients: List<ProductQuantity>, servings: Int, steps: String, imagePath: String?, categoryId: Int?) {
         val db = this.writableDatabase
         val recipeValues = ContentValues()
         recipeValues.put(COLUMN_TITLE, title)
         recipeValues.put(COLUMN_SERVINGS, servings)
         recipeValues.put(COLUMN_STEPS, steps)
-        recipeValues.put(COLUMN_IMAGE, image)
-        recipeValues.put(COLUMN_CATEGORY_ID, categoryId) // Сохраняем ID категории для рецепта
+        recipeValues.put(COLUMN_IMAGE, imagePath) // Сохраняем путь к изображению как строку
+        recipeValues.put(COLUMN_CATEGORY_ID, categoryId)
 
         // Вставляем рецепт и получаем его ID
         val recipeId = db.insert(TABLE_RECIPE, null, recipeValues)
@@ -198,13 +198,13 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
                     val title = cursor.getString(cursor.getColumnIndex(COLUMN_TITLE))
                     val servings = cursor.getInt(cursor.getColumnIndex(COLUMN_SERVINGS))
                     val steps = cursor.getString(cursor.getColumnIndex(COLUMN_STEPS))
-                    val image = cursor.getBlob(cursor.getColumnIndex(COLUMN_IMAGE))
+                    val imagePath = cursor.getString(cursor.getColumnIndex(COLUMN_IMAGE))
 
                     // Получаем ингредиенты для данного рецепта
                     val products = getIngredientsForRecipe(id)
 
                     // Создаем объект рецепта и добавляем в список
-                    recipeList.add(Recipe(id, title, products, servings, steps, image))
+                    recipeList.add(Recipe(id, title, products, servings, steps, imagePath))
                 } while (cursor.moveToNext())
             }
         } catch (e: Exception) {
@@ -272,5 +272,41 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         }
 
         return categoryList
+    }
+
+    fun deleteRecipe(recipeId: Int) {
+        val db = this.writableDatabase
+        db.delete(TABLE_RECIPE, "$COLUMN_ID = ?", arrayOf(recipeId.toString()))
+        db.delete(TABLE_RECIPE_INGREDIENTS, "$COLUMN_RECIPE_ID = ?", arrayOf(recipeId.toString()))
+        db.close()
+    }
+
+    fun getRecipeById(recipeId: Int): Recipe? {
+        val db = this.readableDatabase
+        val cursor = db.query(
+            TABLE_RECIPE,
+            null,
+            "$COLUMN_ID = ?",
+            arrayOf(recipeId.toString()),
+            null,
+            null,
+            null
+        )
+
+        if (cursor != null && cursor.moveToFirst()) {
+            val title = cursor.getString(cursor.getColumnIndex(COLUMN_TITLE))
+            val servings = cursor.getInt(cursor.getColumnIndex(COLUMN_SERVINGS))
+            val steps = cursor.getString(cursor.getColumnIndex(COLUMN_STEPS))
+            val imagePath = cursor.getString(cursor.getColumnIndex(COLUMN_IMAGE)) // Изменено на путь к изображению
+
+            // Получаем ингредиенты для данного рецепта
+            val ingredients = getIngredientsForRecipe(recipeId)
+
+            cursor.close()
+            return Recipe(recipeId, title, ingredients, servings, steps, imagePath)
+        }
+
+        cursor?.close()
+        return null
     }
 }

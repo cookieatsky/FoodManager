@@ -6,7 +6,7 @@ data class Recipe(
     val products: List<ProductQuantity>, // Список продуктов и их количеств
     val servings: Int,
     val steps: String,
-    val image: ByteArray? // Данные изображения
+    val imagePath: String? // Данные изображения
 )
 
 data class ProductQuantity(

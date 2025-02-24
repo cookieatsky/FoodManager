@@ -1,5 +1,6 @@
 package com.example.foodmanager
 
+import android.content.Intent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -23,13 +24,15 @@ class RecipeAdapter(private val recipes: List<Recipe>) : RecyclerView.Adapter<Re
     override fun onBindViewHolder(holder: RecipeViewHolder, position: Int) {
         val recipe = recipes[position]
 
-        holder.title.text = recipe.title // Отображаем заголовок
-        holder.servings.text = "Количество порций: ${recipe.servings}" // Отображаем количество порций
-        holder.steps.text = "Пошаговое приготовление: ${recipe.steps}" // Отображаем пошаговые инструкции
+        holder.title.text = recipe.title
+        holder.servings.text = "Количество порций: ${recipe.servings}"
 
-        // Формируем строку для всех продуктов
-        val productNames = recipe.products.joinToString { "${it.product} (${it.quantity})" }
-        holder.steps.text = holder.steps.text.toString() + "\nПродукты: $productNames" // Отображаем продукты
+        holder.itemView.setOnClickListener {
+            val context = holder.itemView.context
+            val intent = Intent(context, RecipeDetailActivity::class.java)
+            intent.putExtra("RECIPE_ID", recipe.id)
+            context.startActivity(intent)
+        }
     }
 
     override fun getItemCount(): Int {
