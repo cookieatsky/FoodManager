@@ -15,6 +15,7 @@ class CreateRecipeActivity : AppCompatActivity() {
     private lateinit var servingsInput: EditText
     private lateinit var stepsInput: EditText
     private lateinit var productsContainer: LinearLayout
+    private lateinit var categorySpinner: Spinner // Spinner для выбора категории
 
     private lateinit var databaseHelper: DatabaseHelper
 
@@ -29,6 +30,10 @@ class CreateRecipeActivity : AppCompatActivity() {
         servingsInput = findViewById(R.id.edit_text_servings)
         stepsInput = findViewById(R.id.edit_text_steps)
         productsContainer = findViewById(R.id.products_container)
+
+        // Инициализация Spinner для выбора категории
+        categorySpinner = findViewById(R.id.spinner_categories)
+        loadCategoriesIntoSpinner(categorySpinner) // Загружаем категории
 
         // Инициализируем динамическое добавление полей
         addProductField() // Добавление поля для первого продукта
@@ -46,6 +51,13 @@ class CreateRecipeActivity : AppCompatActivity() {
         }
     }
 
+    private fun loadCategoriesIntoSpinner(spinner: Spinner) {
+        val categories = databaseHelper.getAllCategories() // Метод для получения всех категорий
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, categories.map { it.name })
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinner.adapter = adapter
+    }
+
     private fun loadProductsIntoSpinner(spinner: Spinner) {
         val products = databaseHelper.getAllProducts()
         val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, products)
@@ -54,7 +66,7 @@ class CreateRecipeActivity : AppCompatActivity() {
     }
 
     private fun saveRecipe() {
-        val productQuantities = mutableListOf<ProductQuantity>() // Здесь теперь используется правильный класс
+        val productQuantities = mutableListOf<ProductQuantity>()
 
         for (i in 0 until productsContainer.childCount) {
             val productField = productsContainer.getChildAt(i)
@@ -69,12 +81,14 @@ class CreateRecipeActivity : AppCompatActivity() {
             }
         }
 
-        val title = titleInput.text.toString().trim() // Получаем название рецепта
+        val title = titleInput.text.toString().trim()
         val servings = servingsInput.text.toString().toIntOrNull() ?: 0
         val steps = stepsInput.text.toString()
+        val selectedCategory = categorySpinner.selectedItem as? Category
+        val selectedCategoryId = selectedCategory?.id
 
-        // Сохранение рецепта с продуктами
-        databaseHelper.addRecipe(title, productQuantities, servings, steps, null) // Передаем название рецепта
+        // Сохранение рецепта с продуктами и выбранной категорией
+        databaseHelper.addRecipe(title, productQuantities, servings, steps, null, selectedCategoryId)
 
         Toast.makeText(this, "Рецепт сохранен!", Toast.LENGTH_SHORT).show()
         finish()

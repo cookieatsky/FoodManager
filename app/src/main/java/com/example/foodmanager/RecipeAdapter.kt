@@ -12,6 +12,7 @@ class RecipeAdapter(private val recipes: List<Recipe>) : RecyclerView.Adapter<Re
         val title: TextView = itemView.findViewById(R.id.titleTextView) // Заголовок рецепта
         val servings: TextView = itemView.findViewById(R.id.servingsTextView) // Количество порций
         val steps: TextView = itemView.findViewById(R.id.stepsTextView) // Пошаговые инструкции
+
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecipeViewHolder {

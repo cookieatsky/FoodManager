@@ -46,6 +46,11 @@
             android:hint="Количество порций"
             android:layout_marginBottom="16dp" />
 
+        <Spinner
+            android:id="@+id/spinner_categories"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
         <EditText
             android:id="@+id/edit_text_steps"
             android:layout_width="match_parent"

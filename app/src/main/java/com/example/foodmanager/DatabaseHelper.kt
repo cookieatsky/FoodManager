@@ -10,7 +10,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
 
     companion object {
         private const val DATABASE_NAME = "FoodManagerDB.db"
-        private const val DATABASE_VERSION = 3 // Увеличиваем версию базы данных
+        private const val DATABASE_VERSION = 4 // Увеличиваем версию базы данных для изменения структуры
 
         const val TABLE_PRODUCT = "Product"
         const val COLUMN_ID = "ID"
@@ -27,58 +27,93 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         const val COLUMN_SERVINGS = "servings"
         const val COLUMN_STEPS = "steps"
         const val COLUMN_IMAGE = "image" // Если вы планируете хранить изображения
+        const val COLUMN_CATEGORY_ID = "category_id" // Это ID категории для рецепта
 
         // Константы для таблицы ингредиентов
         const val TABLE_RECIPE_INGREDIENTS = "RecipeIngredients"
         const val COLUMN_RECIPE_ID = "recipe_id" // ID рецепта
         const val COLUMN_PRODUCT_NAME = "product_name" // Название продукта
         const val COLUMN_QUANTITY = "quantity" // Количество продукта
+
+        // Константы для таблицы категорий
+        const val TABLE_CATEGORY = "Category"
+        const val COLUMN_CATEGORY_ID_FOR_CATEGORY = "id" // ID категории
+        const val COLUMN_CATEGORY_NAME = "name"
+        const val COLUMN_CATEGORY_PARENT_ID = "parent_id"
+
+        const val TABLE_DISH = "Dish"
+        const val COLUMN_DISH_ID = "dish_id"
+        const val COLUMN_DISH_NAME = "dish_name"
+        const val COLUMN_DISH_CATEGORY_ID = "category_id" // ID категории для блюда
     }
 
     override fun onCreate(db: SQLiteDatabase?) {
         // Создание таблицы продуктов
-        val createTableProduct = (
-                "CREATE TABLE IF NOT EXISTS ${TABLE_PRODUCT} (" +
-                        "${COLUMN_ID} INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                        "${COLUMN_NAME} TEXT, " +
-                        "${COLUMN_UNIT} TEXT, " +
-                        "${COLUMN_PROTEINS} REAL, " +
-                        "${COLUMN_CARBS} REAL, " +
-                        "${COLUMN_FATS} REAL, " +
-                        "${COLUMN_CALORIES} REAL" +
-                        ");"
-                )
+        val createTableProduct = """
+            CREATE TABLE IF NOT EXISTS $TABLE_PRODUCT (
+                $COLUMN_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                $COLUMN_NAME TEXT,
+                $COLUMN_UNIT TEXT,
+                $COLUMN_PROTEINS REAL,
+                $COLUMN_CARBS REAL,
+                $COLUMN_FATS REAL,
+                $COLUMN_CALORIES REAL
+            );
+        """.trimIndent()
 
         // Создание таблицы рецептов
-        val createTableRecipe = (
-                "CREATE TABLE IF NOT EXISTS ${TABLE_RECIPE} (" +
-                        "${COLUMN_ID} INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                        "${COLUMN_TITLE} TEXT, " + // Поле для заголовка рецепта
-                        "${COLUMN_SERVINGS} INTEGER, " +
-                        "${COLUMN_STEPS} TEXT, " +
-                        "${COLUMN_IMAGE} BLOB" +
-                        ");"
-                )
+        val createTableRecipe = """
+            CREATE TABLE IF NOT EXISTS $TABLE_RECIPE (
+                $COLUMN_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                $COLUMN_TITLE TEXT,
+                $COLUMN_SERVINGS INTEGER,
+                $COLUMN_STEPS TEXT,
+                $COLUMN_IMAGE BLOB,
+                $COLUMN_CATEGORY_ID INTEGER
+            );
+        """.trimIndent()
 
         // Создание таблицы ингредиентов рецепта
-        val createTableRecipeIngredients = (
-                "CREATE TABLE IF NOT EXISTS ${TABLE_RECIPE_INGREDIENTS} (" +
-                        "${COLUMN_RECIPE_ID} INTEGER, " +
-                        "${COLUMN_PRODUCT_NAME} TEXT, " +
-                        "${COLUMN_QUANTITY} INTEGER, " +
-                        "FOREIGN KEY(${COLUMN_RECIPE_ID}) REFERENCES ${TABLE_RECIPE}(${COLUMN_ID})" +
-                        ");"
-                )
+        val createTableRecipeIngredients = """
+            CREATE TABLE IF NOT EXISTS $TABLE_RECIPE_INGREDIENTS (
+                $COLUMN_RECIPE_ID INTEGER,
+                $COLUMN_PRODUCT_NAME TEXT,
+                $COLUMN_QUANTITY INTEGER,
+                FOREIGN KEY($COLUMN_RECIPE_ID) REFERENCES $TABLE_RECIPE($COLUMN_ID)
+            );
+        """.trimIndent()
+
+        // Таблица для категорий
+        val createTableCategory = """
+            CREATE TABLE IF NOT EXISTS $TABLE_CATEGORY (
+                $COLUMN_CATEGORY_ID_FOR_CATEGORY INTEGER PRIMARY KEY AUTOINCREMENT,
+                $COLUMN_CATEGORY_NAME TEXT,
+                $COLUMN_CATEGORY_PARENT_ID INTEGER
+            );
+        """.trimIndent()
+
+        // Таблица для блюд
+        val createTableDish = """
+            CREATE TABLE IF NOT EXISTS $TABLE_DISH (
+                $COLUMN_DISH_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                $COLUMN_DISH_NAME TEXT,
+                $COLUMN_DISH_CATEGORY_ID INTEGER
+            );
+        """.trimIndent()
 
         db?.execSQL(createTableProduct)
         db?.execSQL(createTableRecipe)
-        db?.execSQL(createTableRecipeIngredients) // Создание таблицы ингредиентов
+        db?.execSQL(createTableRecipeIngredients)
+        db?.execSQL(createTableCategory)
+        db?.execSQL(createTableDish)
     }
 
     override fun onUpgrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {
-        db?.execSQL("DROP TABLE IF EXISTS $TABLE_RECIPE_INGREDIENTS") // Удаляем таблицу ингредиентов при обновлении версии
+        db?.execSQL("DROP TABLE IF EXISTS $TABLE_RECIPE_INGREDIENTS")
         db?.execSQL("DROP TABLE IF EXISTS $TABLE_RECIPE")
         db?.execSQL("DROP TABLE IF EXISTS $TABLE_PRODUCT")
+        db?.execSQL("DROP TABLE IF EXISTS $TABLE_CATEGORY")
+        db?.execSQL("DROP TABLE IF EXISTS $TABLE_DISH")
         onCreate(db)
     }
 
@@ -97,13 +132,14 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
     }
 
     // Новый метод для добавления рецепта с ингредиентами
-    fun addRecipe(title: String, ingredients: List<ProductQuantity>, servings: Int, steps: String, image: ByteArray?) {
+    fun addRecipe(title: String, ingredients: List<ProductQuantity>, servings: Int, steps: String, image: ByteArray?, categoryId: Int?) {
         val db = this.writableDatabase
         val recipeValues = ContentValues()
-        recipeValues.put(COLUMN_TITLE, title) // Сохраняем название рецепта
+        recipeValues.put(COLUMN_TITLE, title)
         recipeValues.put(COLUMN_SERVINGS, servings)
         recipeValues.put(COLUMN_STEPS, steps)
         recipeValues.put(COLUMN_IMAGE, image)
+        recipeValues.put(COLUMN_CATEGORY_ID, categoryId) // Сохраняем ID категории для рецепта
 
         // Вставляем рецепт и получаем его ID
         val recipeId = db.insert(TABLE_RECIPE, null, recipeValues)
@@ -111,7 +147,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         // Вставляем ингредиенты
         for (ingredient in ingredients) {
             val ingredientValues = ContentValues()
-            ingredientValues.put(COLUMN_RECIPE_ID, recipeId) // Связываем с рецептом
+            ingredientValues.put(COLUMN_RECIPE_ID, recipeId)
             ingredientValues.put(COLUMN_PRODUCT_NAME, ingredient.product)
             ingredientValues.put(COLUMN_QUANTITY, ingredient.quantity)
 
@@ -126,22 +162,22 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         val db = this.readableDatabase
         var cursor: Cursor? = null
         try {
-            val query = "SELECT ${COLUMN_NAME} FROM ${TABLE_PRODUCT}"
+            val query = "SELECT $COLUMN_NAME FROM $TABLE_PRODUCT"
             cursor = db.rawQuery(query, null)
 
             if (cursor.moveToFirst()) {
                 do {
                     val productName = cursor.getString(cursor.getColumnIndex(COLUMN_NAME))
-                    if (productName != null) { // Проверяем, чтобы избежать NullPointerException
+                    if (productName != null) {
                         productList.add(productName)
                     }
                 } while (cursor.moveToNext())
             }
         } catch (e: Exception) {
-            e.printStackTrace() // Логируем ошибки
+            e.printStackTrace()
         } finally {
-            cursor?.close() // Закрываем курсор
-            db.close() // Закрываем базу данных
+            cursor?.close()
+            db.close()
         }
         return productList
     }
@@ -153,13 +189,13 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         var cursor: Cursor? = null
         try {
             // Получаем все записи из таблицы рецептов
-            val query = "SELECT * FROM ${TABLE_RECIPE}"
+            val query = "SELECT * FROM $TABLE_RECIPE"
             cursor = db.rawQuery(query, null)
 
             if (cursor.moveToFirst()) {
                 do {
                     val id = cursor.getInt(cursor.getColumnIndex(COLUMN_ID))
-                    val title = cursor.getString(cursor.getColumnIndex(COLUMN_TITLE)) // Заголовок рецепта
+                    val title = cursor.getString(cursor.getColumnIndex(COLUMN_TITLE))
                     val servings = cursor.getInt(cursor.getColumnIndex(COLUMN_SERVINGS))
                     val steps = cursor.getString(cursor.getColumnIndex(COLUMN_STEPS))
                     val image = cursor.getBlob(cursor.getColumnIndex(COLUMN_IMAGE))
@@ -179,13 +215,19 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         }
         return recipeList
     }
+
     // Метод получения ингредиентов для рецепта
     private fun getIngredientsForRecipe(recipeId: Int): List<ProductQuantity> {
         val ingredientsList = mutableListOf<ProductQuantity>()
         val db = this.readableDatabase
         var cursor: Cursor? = null
         try {
-            val query = "SELECT ${COLUMN_PRODUCT_NAME}, ${COLUMN_QUANTITY} FROM ${TABLE_RECIPE_INGREDIENTS} WHERE ${COLUMN_RECIPE_ID} = ?"
+            val query = """
+                SELECT $COLUMN_PRODUCT_NAME, $COLUMN_QUANTITY 
+                FROM $TABLE_RECIPE_INGREDIENTS 
+                WHERE $COLUMN_RECIPE_ID = ?
+            """.trimIndent()
+
             cursor = db.rawQuery(query, arrayOf(recipeId.toString()))
 
             if (cursor.moveToFirst()) {
@@ -203,5 +245,32 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
             db.close()
         }
         return ingredientsList
+    }
+
+    fun getAllCategories(): List<Category> {
+        val categoryList = mutableListOf<Category>()
+        val db = this.readableDatabase
+        var cursor: Cursor? = null
+
+        try {
+            cursor = db.rawQuery("SELECT * FROM $TABLE_CATEGORY", null)
+            if (cursor.moveToFirst()) {
+                do {
+                    val id = cursor.getInt(cursor.getColumnIndex(COLUMN_CATEGORY_ID_FOR_CATEGORY)) // Изменено имя колонки
+                    val name = cursor.getString(cursor.getColumnIndex(COLUMN_CATEGORY_NAME))
+                    val parentId = cursor.getInt(cursor.getColumnIndex(COLUMN_CATEGORY_PARENT_ID))
+
+                    val category = Category(id, name, parentId)
+                    categoryList.add(category)
+                } while (cursor.moveToNext())
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        } finally {
+            cursor?.close()
+            db.close()
+        }
+
+        return categoryList
     }
 }

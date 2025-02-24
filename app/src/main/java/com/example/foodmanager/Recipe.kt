@@ -14,3 +14,10 @@ data class ProductQuantity(
     val quantity: Int // Количество продукта
 )
 
+
+
+data class Dish(
+    val id: Int,
+    val name: String,
+    val categoryId: Int // ID категории, к которой принадлежит блюдо
+)
